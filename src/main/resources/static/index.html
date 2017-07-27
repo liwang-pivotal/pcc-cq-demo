@@ -26,7 +26,7 @@
 			# of customers to load <input id="load_num" type='text' />
 			<button id="load" class="btn btn-warning" onclick="move()">load</button>
 			<div id="loading_status"></div>
-			<div class="progress" style="display: none;">
+			<div class="progress" style="display: none; ">
 				<div class="progress-bar progress-bar-striped active" id="progress_bar"
 					role="progressbar" aria-valuemin="0"
 					aria-valuemax="100"></div>
@@ -47,16 +47,21 @@
 		<div id="search_tool">
 			<input id="search_content" type='text' placeholder="email address..."/>
 			<button id="search" class="btn btn-default" onclick="search()">Search</button>
+			<div id="search_result"></div>
 		</div>
 		
 		<div id="cq">
 			<button id="registerCQ" class="btn btn-success" onclick="toggle()">Enable CQ</button>
-		</div>
+		</div>		
 		
-		<div id="db_customers"></div>
-		
-		<div id="cq_log"></div>
 	</div>
+	
+	<div>
+		<div id="list_customers"></div>
+		<div id="cq_log"><b>PCC CQ Log:<br><br></b></div>
+		<div id="subscribe_log"><b>PCC CS Log:<br><br></b></div>
+	</div>
+	
 	
 	<script>
 		function update_stats() {
@@ -83,7 +88,7 @@
 			.query({ email: $("#search_content").val() })
 			.then(function(res) {
 				$("#search_content").val('');
-				$("#db_customers").html(res.text);
+				$("#search_result").html(res.text);
 				update_stats();
 		  	})
 		  	.catch(function (error) {
@@ -94,7 +99,6 @@
 		function loaddb() {
 			superagent.get('/loaddb')
 			.then(function(res) {
-				$("#db_customers").html(res.text);
 				update_stats();
 		  	})
 		  	.catch(function (error) {
@@ -105,7 +109,7 @@
 		function showdb() {
 			superagent.get('/showdb')
 			.then(function(res) {
-				$("#db_customers").html(res.text);
+				$("#list_customers").html(res.text);
 		  	})
 		  	.catch(function (error) {
 		    	console.log(error);
@@ -116,7 +120,6 @@
 			$("#loading_status").show().html("Cleaning Database...");
 			superagent.get('/cleardb')
 			.then(function(res) {
-				$("#db_customers").html("");
 				$("#loading_status").html("Cleaned.").fadeOut(3000);
 				update_stats();
 		  	})
@@ -128,7 +131,7 @@
 		function showcache() {
 			superagent.get('/showcache')
 			.then(function(res) {
-				$("#db_customers").html(res.text);
+				$("#list_customers").html(res.text);
 		  	})
 		  	.catch(function (error) {
 		    	console.log(error);
@@ -138,7 +141,6 @@
 		function clearcache() {
 			superagent.get('/clearcache')
 			.then(function(res) {
-				$("#db_customers").html(res.text);
 				update_stats();
 		  	})
 		  	.catch(function (error) {
@@ -194,7 +196,6 @@
 		function registerCQ() {
 			superagent.get('/registercq')
 			.then(function(res) {
-				$("#db_customers").html(res.text);
 		  	})
 		  	.catch(function (error) {
 		    	console.log(error);
@@ -204,7 +205,6 @@
 		function unregisterCQ() {
 			superagent.get('/unregistercq')
 			.then(function(res) {
-				$("#db_customers").html(res.text);
 		  	})
 		  	.catch(function (error) {
 		    	console.log(error);
@@ -248,8 +248,11 @@
 			}
 			
 			client.subscribe('/topic/cq_log', function(msg) {
-				console.log("!!!!!!!!!");
-	            $("#cq_log").html(msg.body);
+				$("#cq_log").append(msg.body+"<br>");
+	        }.bind(this));
+			
+			client.subscribe('/topic/subscribe_log', function(msg) {
+				$("#subscribe_log").append(msg.body+"<br>");
 	        }.bind(this));
 			
 			client.subscribe('/topic/status', function(msg) {

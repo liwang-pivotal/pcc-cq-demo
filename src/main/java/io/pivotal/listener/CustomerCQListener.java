@@ -1,30 +1,38 @@
 package io.pivotal.listener;
 
 import org.apache.geode.cache.query.CqEvent;
+import org.apache.geode.cache.query.CqListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.gemfire.listener.ContinuousQueryListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.stereotype.Component;
 
-@Component
-public class CustomerCQListener implements ContinuousQueryListener {
+public class CustomerCQListener implements CqListener {
 	
 	Logger logger =  LoggerFactory.getLogger(this.getClass());
 	
-	@Autowired
     private SimpMessagingTemplate webSocket;
+	
+	public CustomerCQListener(SimpMessagingTemplate webSocket) {
+		this.webSocket = webSocket;
+	}
 
 	@Override
 	public void onEvent(CqEvent e) {
-		logger.info("hello world");
 		try {
-			webSocket.convertAndSend("/topic/cq_log", "####### Catched a event! " + e);
+			
+			webSocket.convertAndSend("/topic/cq_log", "<b>[CQ Event]</b> " + e.getNewValue());
 	
 		} catch (Exception ex) {
 			logger.info("Exception is: " + ex);
 		}
+	}
+
+	@Override
+	public void close() {
+	}
+
+	@Override
+	public void onError(CqEvent aCqEvent) {
 	}
 	
 }

@@ -3,12 +3,11 @@ package io.pivotal.config;
 import javax.sql.DataSource;
 
 import io.pivotal.domain.Customer;
+import io.pivotal.listener.CustomerListener;
 import io.pivotal.spring.cloud.service.gemfire.GemfireServiceConnectorConfig;
 
-import org.apache.geode.cache.GemFireCache;
-import org.apache.geode.cache.Region;
+import org.apache.geode.cache.CacheListener;
 import org.apache.geode.cache.client.ClientCache;
-import org.apache.geode.cache.client.ClientRegionFactory;
 import org.apache.geode.cache.client.ClientRegionShortcut;
 import org.apache.geode.pdx.ReflectionBasedAutoSerializer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +29,9 @@ import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 @EnableCaching
 @Profile("cloud")
 public class DemoCloudConfig extends AbstractCloudConfig {
+	
+	@Autowired 
+	ClientCache clientCache;
 	
 	@Bean
 	public DataSource dataSource() {
@@ -63,12 +65,16 @@ public class DemoCloudConfig extends AbstractCloudConfig {
     }
 
 
+	@SuppressWarnings("unchecked")
 	@Bean(name = "customer")
-	public ClientRegionFactoryBean<String, Customer> customerRegion(@Autowired GemFireCache clientCache) {
+	public ClientRegionFactoryBean<String, Customer> customerRegion(@Autowired CustomerListener customerListener) {
 		ClientRegionFactoryBean<String, Customer> customerRegionFactory = new ClientRegionFactoryBean<>();
 		customerRegionFactory.setCache(clientCache);
 		customerRegionFactory.setShortcut(ClientRegionShortcut.PROXY);
 		customerRegionFactory.setName("customer");
+		
+		CacheListener<String, Customer>[] cacheListeners = new CacheListener[]{customerListener};
+		customerRegionFactory.setCacheListeners(cacheListeners);
 
 		return customerRegionFactory;
 	}

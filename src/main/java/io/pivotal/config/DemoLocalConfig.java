@@ -14,9 +14,11 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 
 import io.pivotal.domain.Customer;
+import io.pivotal.listener.CustomerListener;
 
 import javax.sql.DataSource;
 
+import org.apache.geode.cache.CacheListener;
 import org.apache.geode.cache.GemFireCache;
 import org.apache.geode.cache.client.ClientRegionShortcut;
 import org.apache.geode.pdx.ReflectionBasedAutoSerializer;
@@ -52,13 +54,17 @@ public class DemoLocalConfig {
 		return ccf;
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Bean(name = "customer")
-	public ClientRegionFactoryBean<String, Customer> customerRegion() {
+	public ClientRegionFactoryBean<String, Customer> customerRegion(@Autowired CustomerListener customerListener) throws Exception {
 		ClientRegionFactoryBean<String, Customer> customerRegionFactory = new ClientRegionFactoryBean<>();
 		customerRegionFactory.setCache(clientCache);
 		customerRegionFactory.setShortcut(ClientRegionShortcut.PROXY);
 		customerRegionFactory.setName("customer");
-
+		
+		CacheListener<String, Customer>[] cacheListeners = new CacheListener[]{customerListener};
+		customerRegionFactory.setCacheListeners(cacheListeners);
+		
 		return customerRegionFactory;
 	}
 	

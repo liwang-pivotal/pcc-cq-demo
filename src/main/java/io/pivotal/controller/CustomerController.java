@@ -4,14 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.geode.cache.Region;
+import org.apache.geode.cache.query.CqAttributes;
+import org.apache.geode.cache.query.CqAttributesFactory;
+import org.apache.geode.cache.query.CqQuery;
+import org.apache.geode.cache.query.QueryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.gemfire.client.ClientCacheFactoryBean;
 import org.springframework.data.gemfire.client.ClientRegionFactoryBean;
-import org.springframework.data.gemfire.listener.ContinuousQueryDefinition;
-import org.springframework.data.gemfire.listener.ContinuousQueryListenerContainer;
-import org.springframework.data.gemfire.listener.adapter.ContinuousQueryListenerAdapter;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -45,7 +46,7 @@ public class CustomerController {
 	
 	Fairy fairy = Fairy.create();
 	
-	ContinuousQueryListenerContainer cqContainer = null;
+	CqQuery myCq = null;
 	
 
 	@RequestMapping(method = RequestMethod.GET, path = "/showcache")
@@ -134,14 +135,18 @@ public class CustomerController {
 	
 	@RequestMapping(method = RequestMethod.GET, path = "/registercq")
 	@ResponseBody
-	public String registerCQ(@Autowired ClientCacheFactoryBean ccf, @Autowired CustomerCQListener cqListener) throws Exception {
+	public String registerCQ(@Autowired ClientCacheFactoryBean ccf) throws Exception {
 		
-		cqContainer = new ContinuousQueryListenerContainer();
-		cqContainer.setCache(ccf.getObject());
-		cqContainer.setQueryService(ccf.getObject().getQueryService());
-		cqContainer.addListener(new ContinuousQueryDefinition("SELECT * FROM /customer", new ContinuousQueryListenerAdapter(cqListener)));
+		QueryService queryService = ccf.getObject().getQueryService();
+		CqAttributesFactory cqAf = new CqAttributesFactory();
+		cqAf.addCqListener(new CustomerCQListener(webSocket));
+		CqAttributes cqa = cqAf.create();
 		
-		cqContainer.start();
+		String query = "SELECT * FROM /customer";
+		
+		myCq = queryService.newCq("myCQ", query, cqa);
+		
+		myCq.execute();
 		
 		webSocket.convertAndSend("/topic/status", cqStatus());
 		
@@ -152,8 +157,8 @@ public class CustomerController {
 	@ResponseBody
 	public String unregisterCQ() throws Exception {
 		
-		cqContainer.stop();
-		cqContainer = null;
+		myCq.close();
+		myCq = null;
 		
 		webSocket.convertAndSend("/topic/status", cqStatus());
 		
@@ -163,9 +168,7 @@ public class CustomerController {
 	@RequestMapping(method = RequestMethod.GET, path = "/cqstatus")
 	@ResponseBody
 	public String cqStatus() throws Exception {
-		return cqContainer != null && cqContainer.isRunning() ? "START" : "STOP";
+		return myCq != null && myCq.getState().isRunning() ? "START" : "STOP";
 	}
-	
-	
 	
 }

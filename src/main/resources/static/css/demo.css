@@ -29,17 +29,28 @@
 
 #search_tool {
 	display: inline-block;
-	text-align: center;
 	padding: 10px;
 	width: 40%;
+	position: absolute;
+	top: 120px;
 }
 
 #search_content {
 	width: 60%;
 }
 
+#search_result {
+	padding: 20px;
+	width: 170%;
+	height: 100px;
+	font-size: 1.1rem;
+	font-style: normal;
+}
+
 #cq {
 	display: inline-block;
+	position: absolute;
+	right: 20px;
 }
 
 .stats_num {
@@ -75,3 +86,35 @@
     height: 30px;
 }
 
+#list_customers {
+	display: inline-block;
+	margin: 10px;
+	width: 63%;
+	height: 170px;
+	font-size: 1.1rem;
+	font-style: normal;
+	overflow: scroll;
+}
+
+#cq_log {
+	display: inline-block;
+	margin: 10px;
+	border-left: 2px solid #e6e6e6;
+	width: 35%;
+	height: 465px;
+	position: absolute;
+	right: 10px;
+	font-size: 1.1rem;
+	font-style: normal;
+	overflow: scroll;
+}
+
+#subscribe_log {
+	margin: 10px;
+	border-top: 2px solid #e6e6e6;
+	width: 63%;
+	height: 300px;
+	font-size: 1.1rem;
+	font-style: normal;
+	overflow: scroll;
+}
